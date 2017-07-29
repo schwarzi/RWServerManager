@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ManagerConfig>
+	<Language>DE</Language>
+	<Server>
+		<IP>localhost</IP>
+		<ServerPath>C:\Projects\Server</ServerPath>
+	</Server>
+	<Restarts>
+		<Task Runtime="00:00" Update="0" WeekDay="-1" />
+    <Task Runtime="04:00" Update="0" WeekDay="-1" />
+		<Task Runtime="04:00" Update="1" WeekDay="-1" />
+		<Task Runtime="08:00" Update="0" WeekDay="-1" />
+		<Task Runtime="12:00" Update="0" WeekDay="-1" />
+		<Task Runtime="16:00" Update="0" WeekDay="-1" />
+		<Task Runtime="20:00" Update="0" WeekDay="-1" />
+	</Restarts>
+</ManagerConfig>
