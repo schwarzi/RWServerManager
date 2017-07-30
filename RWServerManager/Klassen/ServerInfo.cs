@@ -48,13 +48,18 @@ namespace RWServerManager
         [XmlElement("hiveprot")]
         public bool HiveProt { get; set; }
 
+        [XmlIgnore]
+        public bool IsOnline { get; set; }
+
+        [XmlIgnore]
+        public bool IsUpdating { get; set; }
         public static ServerInfo GetServerInfo(string ip, int port)
         {
             ServerInfo result = null;
             try
             {
                 XmlSerializer serializer = new XmlSerializer(typeof(ServerInfo));
-                var reader = XmlReader.Create(string.Format("http://{0}:{1}", ip, port));
+                var reader = XmlReader.Create(string.Format("http://{0}:{1}", ip, port - 1));
                 result = (ServerInfo)serializer.Deserialize(reader);
                 reader.Close();
             }

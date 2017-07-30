@@ -13,6 +13,7 @@
         <ResourceDictionary>
             <local:SelectedRuntimeConverter x:Key="SelectedRuntimeConverter" />
             <local:RestartTaskConverter x:Key="RestartTaskConverter" />
+            <local:ServerStatusConverter x:Key="ServerStatusConverter" />
         </ResourceDictionary>
     </Window.Resources>
     <mah:MetroWindow.Flyouts>
@@ -20,8 +21,8 @@
             <mah:Flyout Position="Right" Width="400" Header="Einstellungen" Theme="Light" x:Name="flSetup">
                 <Grid Background="White">
                     <TextBlock Text="Serverpfad" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,10,0,0" />
-                    <TextBox Text="{Binding MyServer.Path, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,26,0,0" Width="349" />
-                    <Button x:Name="btnSetServerPath" VerticalAlignment="Top" HorizontalAlignment="Left" Style="{StaticResource AccentedSquareButtonStyle}" Margin="364,26,0,0" Height="26" Width="26" Padding="1">
+                    <TextBox x:Name="txtServerPath" Text="{Binding MyServer.Path, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,26,0,0" Width="349" />
+                    <Button x:Name="btnSetServerPath" VerticalAlignment="Top" HorizontalAlignment="Left" Style="{StaticResource AccentedSquareButtonStyle}" Margin="364,26,0,0" Height="26" Width="26" Padding="1" Click="btnSetServerPath_Click">
                         <iconPacks:PackIconFontAwesome Kind="Folder" Width="16" Height="16" />
                     </Button>
                     <TextBlock Text="Serveradresse / IP" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,57,0,0" />
@@ -43,8 +44,8 @@
                                 <TextBlock Text="Restart:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,15,0,0" />
                                 <mah:TimePicker x:Name="tpRunTime" SelectedTime="{Binding ElementName=lvServerRestarts, Path=SelectedItem.Runtime, Converter={StaticResource SelectedRuntimeConverter}, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,36,0,0" mah:TextBoxHelper.Watermark="Restartzeit festlegen" mah:TextBoxHelper.AutoWatermark="True" Culture="de-DE" />
                                 <TextBlock Text="Wochentag:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="186,15,0,0" />
-                                <ComboBox DisplayMemberPath="Name" x:Name="cmbWeekDay" SelectedItem="{Binding ElementName=lvServerRestarts, Path=SelectedItem.WeekDay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="186,36,0,0" Width="172" ItemsSource="{Binding WeekDaySelector}" />
-                                <CheckBox Content="Serverupdate" IsChecked="{Binding ElementName=lvServerRestarts, Path=SelectedItem.Update}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,82,0,0" />
+                                <ComboBox DisplayMemberPath="Name" IsSynchronizedWithCurrentItem="True" x:Name="cmbWeekDay" SelectedItem="{Binding ElementName=lvServerRestarts, Path=SelectedItem.VMRuntimeDay, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="186,36,0,0" Width="172" ItemsSource="{Binding WeekDaySelector}" />
+                                <CheckBox Content="Serverupdate" IsChecked="{Binding ElementName=lvServerRestarts, Path=SelectedItem.Update,Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,82,0,0" />
                                 <Button x:Name="btnSaveRuntime" Content="speichern" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,10" Width="88" Style="{StaticResource AccentedSquareButtonStyle}" />
                             </Grid>
                             <ListView x:Name="lvServerRestarts" BorderThickness="1" ItemsSource="{Binding Runtimes}">
@@ -89,11 +90,49 @@
                             <DropShadowEffect/>
                         </Image.Effect>
                     </Image>
-                    <TextBlock Text="[DE] Wunder der Welt Survival PvE  aktives MoneySystem" VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="90,10,10,0" FontWeight="Bold" FontSize="16" Foreground="White" >
+                    <Image Width="32" Height="32" VerticalAlignment="Top" HorizontalAlignment="Left" Source="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=status}" Margin="10,7,0,0" >
+                        <Image.Effect>
+                            <DropShadowEffect/>
+                        </Image.Effect>
+                    </Image>
+                    <TextBlock Text="{Binding AktualServer, Converter={StaticResource ServerStatusConverter},ConverterParameter=sname}" VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="90,10,10,0" FontWeight="Bold" FontSize="16" Foreground="White" >
                         <TextBlock.Effect>
                             <DropShadowEffect/>
                         </TextBlock.Effect>
                     </TextBlock>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="90,35,0,0">
+                        <TextBlock Text="{Binding AktualServer, Converter={StaticResource ServerStatusConverter},ConverterParameter=ip}" VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="White" />
+                        <TextBlock Text=" : " VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="White" />
+                        <TextBlock Text="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=port}" VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="White" />
+                        <TextBlock Text=" - " VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,0" Foreground="White" />
+                        <TextBlock Text="Version:" VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="White" />
+                        <TextBlock Text="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=version}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="8,0,0,0" Foreground="White" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="90,56,0,0">
+                        <Image Width="24" Height="24" Source="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=hive}" Margin="0,0,8,0" />
+                        <Image Width="24" Height="24" Source="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=locked}" Margin="0,0,8,0" />
+                        <Image Width="24" Height="24" Source="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=wlist}" Margin="0,0,8,0" />
+                        <Image Width="24" Height="24" Source="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=pvp}" Margin="0,0,8,0" />
+                        <Image Width="24" Height="24" Source="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=veri}" Margin="0,0,8,0" />
+                        <Image Width="24" Height="24" Source="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=lua}" Margin="16,0,8,0" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,56,621,0">
+                        <TextBlock Text="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=pcount}" VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="White" FontSize="16" FontWeight="Bold" />
+                        <TextBlock Text="/" VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="White" FontSize="16" FontWeight="Bold" />
+                        <TextBlock Text="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=pmax}" VerticalAlignment="Top" HorizontalAlignment="Left" Foreground="White" FontSize="16" FontWeight="Bold" />
+                    </StackPanel>
+                    <Button x:Name="btnStartServer" IsEnabled="{Binding AktualServer, Converter={StaticResource ServerStatusConverter},ConverterParameter=start}" VerticalAlignment="Bottom" HorizontalAlignment="Right" Style="{StaticResource AccentedSquareButtonStyle}" Margin="0,0,236,10" Click="btnStartServer_Click">
+                        <iconPacks:PackIconMaterial Kind="ArrowRightDropCircle" Width="16" Height="16" />
+                    </Button>
+                    <Button x:Name="btnStopServer" IsEnabled="{Binding AktualServer, Converter={StaticResource ServerStatusConverter}, ConverterParameter=stop}" VerticalAlignment="Bottom" HorizontalAlignment="Right"  Style="{StaticResource AccentedSquareButtonStyle}" Margin="0,0,205,10" Click="btnStopServer_Click">
+                        <iconPacks:PackIconMaterial Kind="Power" Width="16" Height="16" />
+                    </Button>
+                    <Button x:Name="btnUpdateServer" VerticalAlignment="Bottom" HorizontalAlignment="Right"  Style="{StaticResource AccentedSquareButtonStyle}" Margin="0,0,174,10" Click="btnUpdateServer_Click">
+                        <iconPacks:PackIconMaterial Kind="CloudSync" Height="16" Width="16" />
+                    </Button>
+                    <Button x:Name="btnSetupServer" VerticalAlignment="Bottom" HorizontalAlignment="Right"  Style="{StaticResource AccentedSquareButtonStyle}" Margin="0,0,128,10" >
+                        <iconPacks:PackIconMaterial Kind="Wrench" Height="16" Width="16" />
+                    </Button>
                 </Grid>
             </Border>
             <StatusBar x:Name="sbMain" DockPanel.Dock="Bottom" Height="30">
@@ -110,9 +149,24 @@
                     </TabControl>
                 </DockPanel>
             </GroupBox>-->
-            
-            <WrapPanel x:Name="wpContent">
-            </WrapPanel>
+            <DockPanel LastChildFill="True">
+                <Grid DockPanel.Dock="Right" Width="300" Background="#FFE6E6E6">
+                    
+                </Grid>
+                <TabControl DockPanel.Dock="Left">
+                    <TabItem Header="Serverlog">
+                        <TextBox IsReadOnly="True" Text="{Binding ServerLog}" x:Name="txtServerLog" TextWrapping="Wrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextChanged="txtServerLog_TextChanged" />
+                    </TabItem>
+                    <TabItem Header="Datenbank">
+                        <DockPanel>
+                            <ToolBar Height="30" DockPanel.Dock="Top">
+                                <ComboBox ItemsSource="{Binding ServerTables}" Margin="0,0,0,-1" Width="446" SelectionChanged="ComboBox_SelectionChanged" />
+                            </ToolBar>
+                            <DataGrid x:Name="dgServerTable" />
+                        </DockPanel>
+                    </TabItem>
+                </TabControl>
+            </DockPanel>
         </DockPanel>
     </mah:MetroContentControl>
 </mah:MetroWindow>

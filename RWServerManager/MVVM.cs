@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,53 @@ namespace RWServerManager
         private string _language;
         private List<VMLanguage> _vmLanguages;
         private List<RunTimeDay> _weekDaySelector;
+        private string _javaPath;
+        private ServerInfo _aktualServer;
+        private List<string> _serverTables;
+        private string _serverlog;
+
+        public List<string> ServerTables
+        {
+            get { return _serverTables; }
+            set
+            {
+                if (Equals(value, _serverTables)) return;
+                _serverTables = value;
+                RaisePropertyChanged("ServerTables");
+            }
+        }
+        
+        public string ServerLog
+        {
+            get { return _serverlog; }
+            set
+            {
+                if (Equals(value, _serverlog)) return;
+                _serverlog = value;
+                RaisePropertyChanged("ServerLog");
+            }
+        }
+
+        public ServerInfo AktualServer
+        {
+            get { return _aktualServer; }
+            set
+            {
+                if (Equals(value, _aktualServer)) return;
+                _aktualServer = value;
+                RaisePropertyChanged("AktualServer");
+            }
+        }
+        public string JAVAPath
+        {
+            get { return _javaPath; }
+            set
+            {
+                if (Equals(value, _javaPath)) return;
+                _javaPath = value;
+                RaisePropertyChanged("JAVAPath");
+            }
+        }
 
         public List<RunTimeDay> WeekDaySelector
         {

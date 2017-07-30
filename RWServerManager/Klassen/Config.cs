@@ -85,6 +85,7 @@ namespace RWServerManager
 
         [XmlElement("ServerPath")]
         public string Path { get; set; }
+
     }
 
     public class RuntimeConfig
@@ -120,5 +121,94 @@ namespace RWServerManager
                 return string.Format("{0} {1} Uhr", wday, Runtime);
             }
         }
+
+        [XmlIgnore]
+        public RunTimeDay VMRuntimeDay
+        {
+            get
+            {
+                switch (WeekDay)
+                {
+                    default:
+                    case -1:
+                        {
+                            return new RunTimeDay()
+                            {
+                                Name = "täglich",
+                                Selector = -1,
+                                WeekDay = DayOfWeek.Sunday
+                            };
+                        }
+                    case 0:
+                        {
+                            return new RunTimeDay()
+                            {
+                                Name = "Sonntag",
+                                Selector = 0,
+                                WeekDay = DayOfWeek.Sunday
+                            };
+                        }
+                    case 1:
+                        {
+                            return new RunTimeDay()
+                            {
+                                Name = "Montag",
+                                Selector = 1,
+                                WeekDay = DayOfWeek.Monday
+                            };
+                        }
+                    case 2:
+                        {
+                            return new RunTimeDay()
+                            {
+                                Name = "Dienstag",
+                                Selector = 2,
+                                WeekDay = DayOfWeek.Tuesday
+                            };
+                        }
+                    case 3:
+                        {
+                            return new RunTimeDay()
+                            {
+                                Name = "Mittwoch",
+                                Selector = 3,
+                                WeekDay = DayOfWeek.Wednesday
+                            };
+                        }
+                    case 4:
+                        {
+                            return new RunTimeDay()
+                            {
+                                Name = "Donnerstag",
+                                Selector = 4,
+                                WeekDay = DayOfWeek.Thursday
+                            };
+                        }
+                    case 5:
+                        {
+                            return new RunTimeDay()
+                            {
+                                Name = "Freitag",
+                                Selector = 5,
+                                WeekDay = DayOfWeek.Friday
+                            };
+                        }
+                    case 6:
+                        {
+                            return new RunTimeDay()
+                            {
+                                Name = "Sonnabend",
+                                Selector = 6,
+                                WeekDay = DayOfWeek.Saturday
+                            };
+                        }
+                }
+            }
+            set
+            {
+                WeekDay = value.Selector;
+            }
+        }
+
     }
 }

@@ -7,11 +7,11 @@
 	</Server>
 	<Restarts>
 		<Task Runtime="00:00" Update="0" WeekDay="-1" />
-    <Task Runtime="04:00" Update="0" WeekDay="-1" />
-		<Task Runtime="04:00" Update="1" WeekDay="-1" />
-		<Task Runtime="08:00" Update="0" WeekDay="-1" />
-		<Task Runtime="12:00" Update="0" WeekDay="-1" />
-		<Task Runtime="16:00" Update="0" WeekDay="-1" />
+		<Task Runtime="04:00" Update="0" WeekDay="0" />
+		<Task Runtime="04:00" Update="1" WeekDay="1" />
+		<Task Runtime="08:00" Update="0" WeekDay="2" />
+		<Task Runtime="12:00" Update="0" WeekDay="3" />
+		<Task Runtime="16:00" Update="0" WeekDay="4" />
 		<Task Runtime="20:00" Update="0" WeekDay="-1" />
 	</Restarts>
 </ManagerConfig>
