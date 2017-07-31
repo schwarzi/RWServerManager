@@ -1,0 +1,8 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+    <system:String x:Key="admins">PGgyPmFkbWluczwvaDI+DQoJR2lidCBkaWUgQWRtaW5zIGF1ZiBkZW4gU2VydmVyIGFuLg0KCTxwPg0KCTxlbT5CZWlzcGllbDogUGxheWVyMTtQbGF5ZXIyOyBldGM8L2VtPg0KCTwvcD4NCg==</system:String>
+    <system:String x:Key="contact">PGgyPmNvbnRhY3Q8L2gyPg0KCUVpbmUgS29udGFrdGFkcmVzc2UgKEhvbWVwYWdlIG9kZXIgTWFpbCksIG51ciB1bSBkZW4gU3BpZWxlcm4gZWluZSBNw7ZnbGljaGtlaXQgenUgZ2ViZW4sIHNpY2ggbWl0IElobmVuIGluIFZlcmJpbmR1bmcgenUgc2V0emVuIDxlbT4ob3B0aW9uYWwpPC9lbT4NCg==</system:String>
+    <system:String x:Key="database_mysql_connections">PGgyPmRhdGFiYXNlX215c3FsX2Nvbm5lY3Rpb25zPC9oMj4NCglNYXguIEFuemFobCBkZXIgZ2xlaWNoemVpdGlnZW4gRGF0ZW5iYW5rdmVyYmluZHVuZ2VuIDxlbT4obnVyIGJlaSBWZXJ3ZW5kdW5nIHZvbiBNeVNRTCk8L2VtPg0K</system:String>
+    <system:String x:Key="database_mysql_database">PGgyPmRhdGFiYXNlX215c3FsX2RhdGFiYXNlPC9oMj4NCglOYW1lIGRlciBNeVNRTC1EYXRlbmJhbmsgPGVtPihudXIgYmVpIGRlciBWZXJ3ZW5kdW5nIHZvbiBNeVNRTCk8L2VtPg==</system:String>
+</ResourceDictionary>

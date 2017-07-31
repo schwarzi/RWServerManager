@@ -211,4 +211,14 @@ namespace RWServerManager
         }
 
     }
+
+    [XmlRoot("RwSwUpdate")]
+    public class UpdateData
+    {
+        public string Version { get; set; }
+
+        public string Url { get; set; }
+
+        public string ReleaseInfo { get; set; }
+    }
 }

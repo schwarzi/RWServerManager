@@ -8,12 +8,55 @@
         xmlns:local="clr-namespace:RWServerManager"
         mc:Ignorable="d"
         Title="Rising World Server Manager" Height="768" Width="1024" GlowBrush="{DynamicResource AccentColorBrush}"
-        WindowStartupLocation="CenterScreen" BorderThickness="1" WindowTransitionsEnabled="False" Icon="rwsw.ico" Loaded="MetroWindow_Loaded">
+        WindowStartupLocation="CenterScreen" BorderThickness="1" WindowTransitionsEnabled="False" Icon="rwsw.ico" Loaded="MetroWindow_Loaded" Closing="MetroWindow_Closing">
     <Window.Resources>
         <ResourceDictionary>
+            <Style x:Key="winbtn"  TargetType="{x:Type Button}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+            					HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+            					VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+            					SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+            					ContentTemplate="{TemplateBinding ContentTemplate}"
+            					RecognizesAccessKey="True"
+            					Content="{TemplateBinding Content}" />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style TargetType="{x:Type TextBox}" x:Key="OpenFileTextbox" BasedOn="{StaticResource ButtonCommandMetroTextBox}">
+                <Setter Property="mah:TextBoxHelper.ButtonTemplate">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Grid Background="{TemplateBinding Background}">
+                                <Grid x:Name="contentPresenter" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      Margin="{TemplateBinding Padding}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Opacity="0.75">
+                                    <iconPacks:PackIconMaterial Kind="FileImage" Width="15" Height="15" />
+                                </Grid>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="contentPresenter" Property="Opacity" Value="1" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="False">
+                                    <Setter TargetName="contentPresenter" Property="Opacity" Value=".5" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="false">
+                                    <Setter Property="Foreground" Value="#ADADAD" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <local:SelectedRuntimeConverter x:Key="SelectedRuntimeConverter" />
             <local:RestartTaskConverter x:Key="RestartTaskConverter" />
             <local:ServerStatusConverter x:Key="ServerStatusConverter" />
+            <local:DBTypeSelectorConverter x:Key="DBTypeSelectorConverter" />
+
         </ResourceDictionary>
     </Window.Resources>
     <mah:MetroWindow.Flyouts>
@@ -136,37 +179,162 @@
                 </Grid>
             </Border>
             <StatusBar x:Name="sbMain" DockPanel.Dock="Bottom" Height="30">
-                <StatusBarItem Content="RW ServerManager"/>
+                <StatusBarItem Content="Version:"/>
+                <StatusBarItem x:Name="sbiVersion" />
             </StatusBar>
-            <!--<GroupBox Header="Einstellungen">
-                <DockPanel x:Name="dpSetup" LastChildFill="True">
-                    <Grid DockPanel.Dock="Right" Width="300">
-
-                    </Grid>
-                    <TabControl >
-                        <TabItem>
+            <Grid x:Name="grdMainContent">
+                <DockPanel LastChildFill="True" Visibility="Collapsed">
+                    <TabControl DockPanel.Dock="Left">
+                        <TabItem Header="Serverlog">
+                            <TextBox IsReadOnly="True" Text="{Binding ServerLog}" x:Name="txtServerLog" TextWrapping="Wrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextChanged="txtServerLog_TextChanged" />
+                        </TabItem>
+                        <TabItem Header="Datenbank">
+                            <DockPanel>
+                                <ToolBar Height="30" DockPanel.Dock="Top">
+                                    <ComboBox ItemsSource="{Binding ServerTables}" Margin="0,0,0,-1" Width="446" SelectionChanged="ComboBox_SelectionChanged" />
+                                </ToolBar>
+                                <DataGrid x:Name="dgServerTable" />
+                            </DockPanel>
                         </TabItem>
                     </TabControl>
                 </DockPanel>
-            </GroupBox>-->
-            <DockPanel LastChildFill="True">
-                <Grid DockPanel.Dock="Right" Width="300" Background="#FFE6E6E6">
-                    
-                </Grid>
-                <TabControl DockPanel.Dock="Left">
-                    <TabItem Header="Serverlog">
-                        <TextBox IsReadOnly="True" Text="{Binding ServerLog}" x:Name="txtServerLog" TextWrapping="Wrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextChanged="txtServerLog_TextChanged" />
-                    </TabItem>
-                    <TabItem Header="Datenbank">
-                        <DockPanel>
-                            <ToolBar Height="30" DockPanel.Dock="Top">
-                                <ComboBox ItemsSource="{Binding ServerTables}" Margin="0,0,0,-1" Width="446" SelectionChanged="ComboBox_SelectionChanged" />
-                            </ToolBar>
-                            <DataGrid x:Name="dgServerTable" />
-                        </DockPanel>
-                    </TabItem>
-                </TabControl>
-            </DockPanel>
+                <GroupBox>
+                    <GroupBox.Header>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4*"/>
+                                <ColumnDefinition Width="88*"/>
+                                <ColumnDefinition Width="8*"/>
+                            </Grid.ColumnDefinitions>
+                            <iconPacks:PackIconMaterial Kind="Wrench" Height="24" Width="24" Foreground="White" />
+                            <TextBlock Grid.Column="1" Text="Servereinstellungen" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                       Foreground="White" FontWeight="Bold" FontSize="13.333"/>
+                            <Button Grid.Column="2" x:Name="btnGrpClose" Content="X" Style="{StaticResource winbtn}"
+                                    Foreground="White" FontWeight="Bold" Width="24" HorizontalAlignment="Right"/>
+                        </Grid>
+                    </GroupBox.Header>
+                    <DockPanel x:Name="dpSetup" LastChildFill="True" Background="#ccffffff">
+                        <Grid DockPanel.Dock="Right" Width="300" Background="LightGray" Margin="5,0,0,0">
+                            <WebBrowser x:Name="wbServerSetup" local:BrowserBehavior.Html="{Binding SettingsHtml}" MaxWidth="300" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                            </WebBrowser>
+                        </Grid>
+                        <TabControl >
+                            <TabItem Header="Allgemein" mah:ControlsHelper.HeaderFontSize="18">
+                                <Grid>
+                                    <TextBlock Text="Admins" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,10,0,0" />
+                                    <TextBox Text="{Binding ServerProperties.admins, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,31,0,0" RenderTransformOrigin="0.5,0.5" Height="58" Width="270" GotFocus="GetSettingsDescription" />
+                                    <TextBlock Text="Kontakt:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,98,0,0" />
+                                    <TextBox Text="{Binding ServerProperties.contact, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="58,94,0,0" Width="222" />
+                                    <TextBlock Text="Datenbanktyp:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,130,0,0" />
+                                    <ComboBox x:Name="cmbSelDbTyp" VerticalAlignment="Top" HorizontalAlignment="Left"  SelectedIndex="{Binding ServerProperties.database_type, Converter={StaticResource DBTypeSelectorConverter}, Mode=TwoWay}" Margin="92,125,0,0" Width="188" SelectionChanged="cmbSelDbTyp_SelectionChanged">
+                                        <ComboBoxItem Content="SQLite" />
+                                        <ComboBoxItem Content="MySql" />
+                                    </ComboBox>
+                                    <GroupBox x:Name="grpSetMysql" Header="MySql-Datenbank" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,156,0,0" Width="270" >
+                                        <Grid>
+                                            <TextBlock Text="Verbindungen:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,15,0,0" />
+                                            <mah:NumericUpDown Value="{Binding ServerProperties.database_mysql_connections, Mode=TwoWay}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="92,10,0,0" HideUpDownButtons="True" Width="39" />
+                                            <TextBlock Text="Datenbank:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,45,0,0" />
+                                            <TextBox x:Name="txtDbName" Text="{Binding ServerProperties.database_mysql_database, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="92,41,0,0" Width="156" />
+                                            <TextBlock Text="Server:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,76,0,0" />
+                                            <TextBox Text="{Binding ServerProperties.database_mysql_server_ip, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="92,72,0,0" Width="156" />
+                                            <TextBlock Text="Benutzer:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,107,0,0" />
+                                            <TextBox Text="{Binding ServerProperties.database_mysql_user, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="92,103,0,0" Width="156" />
+                                            <TextBlock Text="Kennwort:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,138,0,0" />
+                                            <TextBox Text="{Binding ServerProperties.database_mysql_password, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="92,134,0,0" Width="156" />
+                                            <TextBlock Text="Port:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,170,0,0" />
+                                            <mah:NumericUpDown Value="{Binding ServerProperties.database_mysql_server_port, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="92,165,0,0" HideUpDownButtons="True" />
+                                        </Grid>
+                                    </GroupBox>
+                                    <CheckBox IsChecked="{Binding ServerProperties.plugins_enabled, Mode=TwoWay}" Content="Plugins aktivieren" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,401,0,0" />
+                                    <TextBlock Text="max. Anzahl Fehler:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,429,0,0" />
+                                    <mah:NumericUpDown Value="{Binding ServerProperties.plugins_error_threshold, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="117,424,0,0" HideUpDownButtons="True" />
+                                    <TextBlock Text="Pfad zur JDK" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,455,0,0" />
+                                    <TextBox Text="{Binding ServerProperties.plugins_jdk_path, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,471,0,0" Width="270" />
+                                    <CheckBox IsChecked="{Binding ServerProperties.settings_admins_allpermissions, Mode=TwoWay}" Content="Alle Rechte für Admins" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="323,8,0,0" />
+                                    <CheckBox IsChecked="{Binding ServerProperties.settings_animals_enabled, Mode=TwoWay}" Content="Tiere aktivieren" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="323,77,0,0" />
+                                    <CheckBox IsChecked="{Binding ServerProperties.settings_whitelisted, Mode=TwoWay}" Content="Whitelisted" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="323,100,0,0" />
+                                    <CheckBox IsChecked="{Binding ServerProperties.settings_blacklisted, Mode=TwoWay}" Content="Blacklisted" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="546,100,0,0" />
+                                    <CheckBox IsChecked="{Binding ServerProperties.settings_check_version, Mode=TwoWay}" Content="Versionsprüfung" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="323,31,0,0" />
+                                    <CheckBox IsChecked="{Binding ServerProperties.settings_create_serverlog, Mode=TwoWay}" Content="Serverlog erstellen" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="546,54,0,0" />
+                                    <CheckBox IsChecked="{Binding ServerProperties.settings_create_worldbackup, Mode=TwoWay}" Content="Weltbackup erstellen" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="323,54,0,0" />
+                                    <CheckBox IsChecked="{Binding ServerProperties.settings_deadplayers_creategrave, Mode=TwoWay}" Content="Grabsteine erstellen" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="546,31,0,0" />
+                                    <CheckBox IsChecked="{Binding ServerProperties.settings_monsters_enabled, Mode=TwoWay}" Content="Monster aktivieren" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="546,77,0,0" />
+                                    <CheckBox IsChecked="{Binding ServerProperties.settings_peacefulmode_enabled, Mode=TwoWay}" Content="friedlicher Modus" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="546,8,0,0" />
+                                    <GroupBox Header="Despawn-Zeiten (Sekunden)" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="323,132,0,0" Width="348" >
+                                        <Grid>
+                                            <TextBlock Text="gestorbene Spieler:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,15,0,0" />
+                                            <mah:NumericUpDown Value="{Binding ServerProperties.settings_deadplayers_despawntime, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="130,10,0,0" HideUpDownButtons="True" />
+                                            <TextBlock Text="gestorbene NPC's:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,46,0,0" />
+                                            <mah:NumericUpDown Value="{Binding ServerProperties.settings_deadnpc_despawntime, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="130,41,0,0" HideUpDownButtons="True" />
+                                            <TextBlock Text="fallengelassene Items:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,77,0,0" />
+                                            <mah:NumericUpDown Value="{Binding ServerProperties.settings_item_despawntime, Mode=TwoWay}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="130,72,0,10" HideUpDownButtons="True" />
+                                        </Grid>
+                                    </GroupBox>
+                                    <TextBlock Text="Illegal State Limit:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="323,300,0,0" />
+                                    <mah:NumericUpDown Value="10" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="421,295,0,0" HideUpDownButtons="True" />
+                                    <TextBlock Text="Spawnschutzzeit:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="514,300,0,0" />
+                                    <mah:NumericUpDown Value="20" VerticalAlignment="Top" HorizontalAlignment="Left" HideUpDownButtons="True" Margin="609,295,0,0" />
+                                    <TextBlock Text="NPC-Spawnrate:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="323,331,0,0" />
+                                    <mah:NumericUpDown Value="1" VerticalAlignment="Top" HorizontalAlignment="Left" HideUpDownButtons="True" StringFormat="{}{0:N1}" Margin="421,326,0,0" />
+                                </Grid>
+                            </TabItem>
+                            <TabItem Header="Server" mah:ControlsHelper.HeaderFontSize="18">
+                                <Grid>
+                                    <TextBlock Text="IP/Adresse:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,10,0,0" />
+                                    <TextBox Text="217.17.197.100" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,26,0,0" Width="222" />
+                                    <TextBlock Text="Passwort" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,63,0,0" />
+                                    <TextBox Text="" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,79,0,0" Width="222" />
+                                    <TextBlock Text="Ram:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="255,63,0,0"/>
+                                    <mah:NumericUpDown Value="1024" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="255,79,0,0" HideUpDownButtons="True" />
+                                    <TextBlock Text="Port:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="255,10,0,0" />
+                                    <mah:NumericUpDown Value="4255" VerticalAlignment="Top" HorizontalAlignment="Left" HideUpDownButtons="True" Margin="255,26,0,0" />
+                                    <TextBlock Text="Eigenes Logo" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,110,0,0" />
+                                    <TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,126,0,0" Width="307"
+                                             Style="{StaticResource OpenFileTextbox}" mah:TextBoxHelper.Watermark="Bild (*.png, *jpg, *.gif)"
+                                             mah:TextBoxHelper.ButtonCommand="{Binding BrowseImagefileCommand}" Text="{Binding ServerLogoFile, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged, NotifyOnValidationError=True}"/>
+                                    <CheckBox Content="Hive Verification" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,162,0,0" />
+                                    <CheckBox Content="in Serverliste anzeigen" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="175,162,0,0" />
+                                    <TextBlock Text="Name der Welt" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,188,0,0" />
+                                    <TextBox Text="" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,204,0,0" Width="307" />
+                                    <CheckBox Content="generiere Höhlen" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="201,489,0,0" />
+                                    <CheckBox Content="generiere Vegetation" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,489,0,0" />
+                                    <TextBlock Text="Seed" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,235,0,0" />
+                                    <TextBox Text="" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,251,0,0" Width="307" />
+                                    <TextBlock Text="Max. Spieler:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,287,0,0" />
+                                    <mah:NumericUpDown Value="256" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="82,282,0,0" HideUpDownButtons="True" />
+                                    <TextBlock Text="Anzahl Erze:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="184,287,0,0" />
+                                    <mah:NumericUpDown Value="3" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="253,282,0,0" HideUpDownButtons="True" />
+                                    <TextBlock Text="Max NPC's:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,318,0,0" />
+                                    <mah:NumericUpDown Value="50" HideUpDownButtons="True" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="82,313,0,0" />
+                                    <TextBlock Text="Welttyp:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,349,0,0" />
+                                    <ComboBox x:Name="cmbWorldTyp" VerticalAlignment="Top" HorizontalAlignment="Left" SelectedIndex="0" Width="145" Margin="82,344,0,0">
+                                        <ComboBoxItem Content="Default" />
+                                        <ComboBoxItem Content="Normal" />
+                                        <ComboBoxItem Content="Superflat" />
+                                        <ComboBoxItem Content="Surreal" />
+                                    </ComboBox>
+                                    <GroupBox Header="RCON" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="342,10,0,0" Width="329" >
+                                        <Grid>
+                                            <CheckBox Content="RCON aktivieren" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,10,0,0" />
+                                            <TextBlock Text="RCON-Port" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,38,0,0" />
+                                            <mah:NumericUpDown Value="4253" VerticalAlignment="Top" HorizontalAlignment="Left" HideUpDownButtons="True" Margin="10,54,0,0" HasDecimals="False" Minimum="1" Maximum="65535" />
+                                            <TextBlock Text="Passwort" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="139,38,0,0" />
+                                            <TextBox VerticalAlignment="Top" HorizontalAlignment="Left" Margin="139,54,0,10" Width="168" />
+                                        </Grid>
+                                    </GroupBox>
+                                    <TextBlock Text="Deaktivierte Dungeontypen" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="342,144,0,0" />
+                                    <ListBox VerticalAlignment="Top" HorizontalAlignment="Left" Width="329" Height="70" Margin="342,162,0,0" BorderThickness="1" />
+                                    <TextBlock Text="Deaktivierte NPC's" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="342,238,0,0" />
+                                    <ListBox VerticalAlignment="Top" HorizontalAlignment="Left" Width="329" Height="70" Margin="342,254,0,0" BorderThickness="1" />
+                                </Grid>
+                            </TabItem>
+                        </TabControl>
+                    </DockPanel>
+                </GroupBox>
+
+            </Grid>
         </DockPanel>
     </mah:MetroContentControl>
 </mah:MetroWindow>

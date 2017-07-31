@@ -38,12 +38,12 @@ namespace RWServerManager
 
         public void Stop()
         {
-            _isrunning = false;
             if(_myThread != null)
             {
                 _myThread.Abort();
                 _myThread.Join();
             }
+            _isrunning = false;
         }
 
         private void DoWork()
@@ -77,5 +77,7 @@ namespace RWServerManager
             }
             _isrunning = false;
         }
+
+        public bool IsRunning { get { return _isrunning; } }
     }
 }

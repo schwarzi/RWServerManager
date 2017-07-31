@@ -23,6 +23,11 @@ using ICSharpCode.SharpZipLib.Core;
 using System.Data;
 using System.Data.SQLite;
 using MySql.Data.MySqlClient;
+using System.Reflection;
+using System.Diagnostics;
+using System.Xml.Serialization;
+using System.Xml;
+using MahApps.Metro.Controls.Dialogs;
 
 namespace RWServerManager
 {
@@ -61,6 +66,33 @@ namespace RWServerManager
 
         private void MetroWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            var thisVersion = Assembly.GetExecutingAssembly().Location;
+            FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(thisVersion);
+            sbiVersion.Content = fvi.ProductVersion + " ALPHA";
+
+            string xmlUrl = "http://wdw-community.de/RWSWUpdate.xml";
+            try
+            {
+                var reader = new XmlTextReader(xmlUrl);
+                var uSerializer = new XmlSerializer(typeof(UpdateData));
+                var updData = (UpdateData)uSerializer.Deserialize(reader);
+
+                if(updData != null)
+                {
+                    Version newVersion = new Version(updData.Version);
+                    Version oldVersion = new Version(fvi.ProductVersion);
+                    if(oldVersion.CompareTo(newVersion) < 0)
+                    {
+                        ShowUpdateDialog();
+                        return;
+                    }
+                }
+               
+            }
+            catch (Exception ex)
+            {
+
+            }
 
             _viewModel.LanguageSelector = new List<VMLanguage>()
             {
@@ -77,7 +109,6 @@ namespace RWServerManager
                     Short = "EN"
                 }
             };
-
             _viewModel.WeekDaySelector = new List<RunTimeDay>()
             {
                 new RunTimeDay()
@@ -136,138 +167,169 @@ namespace RWServerManager
             }
             else
             {
-                
                 _viewModel.Language = String.IsNullOrEmpty(_config.MyConfig.Language) ? "DE" : _config.MyConfig.Language;
                 _viewModel.MyServer = _config.MyConfig.Server;
                 _viewModel.Runtimes = _config.MyConfig.Restarts;
                 _viewModel.JAVAPath = Environment.GetEnvironmentVariable("JAVA_HOME");
-                #region Laden der ServerPlugins(LUA und JAVA)
-                #region LuaPlugins
-                string serverLuaPath = System.IO.Path.Combine(_viewModel.MyServer.Path, _luaPath);
-                var allLuaPlugins = System.IO.Directory.GetDirectories(serverLuaPath);
-                if (allLuaPlugins != null && allLuaPlugins.Count() > 0)
-                {
-                    foreach (var luaFile in allLuaPlugins)
-                    {
-                        LuaPlugin luaPlugin = new LuaPlugin();
-                        luaPlugin.LoadFile(allLuaPlugins[0]);
-                        if (luaPlugin != null && luaPlugin.LuaData != null)
-                        {
-                            if (_viewModel.ServerPlugins == null)
-                                _viewModel.ServerPlugins = new List<PluginType>();
 
-                            _viewModel.ServerPlugins.Add(luaPlugin);
-                        }
-                    }
-                }
-                #endregion
-
-                #region JavaPlugins
-                string serverJavaPath = System.IO.Path.Combine(_viewModel.MyServer.Path, _pluginPath);
-                if (System.IO.Directory.Exists(serverJavaPath))
+                if (System.IO.Directory.Exists(_viewModel.MyServer.Path))
                 {
-                    var allJavaPlugins = System.IO.Directory.GetDirectories(serverJavaPath);
-                    if (allJavaPlugins != null && allJavaPlugins.Count() > 0)
+                    #region Laden der ServerPlugins(LUA und JAVA)
+                    #region LuaPlugins
+                    string serverLuaPath = System.IO.Path.Combine(_viewModel.MyServer.Path, _luaPath);
+                    var allLuaPlugins = System.IO.Directory.GetDirectories(serverLuaPath);
+                    if (allLuaPlugins != null && allLuaPlugins.Count() > 0)
                     {
-                        foreach (var jarFile in allJavaPlugins)
+                        foreach (var luaFile in allLuaPlugins)
                         {
-                            JavaPlugin javaPlugin = new JavaPlugin();
-                            javaPlugin.LoadFile(jarFile);
-                            if (javaPlugin != null && javaPlugin.JavaData != null)
+                            LuaPlugin luaPlugin = new LuaPlugin();
+                            luaPlugin.LoadFile(allLuaPlugins[0]);
+                            if (luaPlugin != null && luaPlugin.LuaData != null)
                             {
                                 if (_viewModel.ServerPlugins == null)
                                     _viewModel.ServerPlugins = new List<PluginType>();
 
-                                _viewModel.ServerPlugins.Add(javaPlugin);
+                                _viewModel.ServerPlugins.Add(luaPlugin);
                             }
                         }
                     }
-                }
-                #endregion
-                #endregion
+                    #endregion
 
-                #region laden der Server.properties
-                var serverPropertyFile = System.IO.Path.Combine(_viewModel.MyServer.Path, "server.properties");
-                if (System.IO.File.Exists(serverPropertyFile))
-                {
-                    var properties = ReadPropertyFile(serverPropertyFile);
-                    var json = JsonConvert.SerializeObject(properties, Formatting.Indented);
-
-                    _viewModel.ServerProperties = (ServerProperty)JsonConvert.DeserializeObject<ServerProperty>(json);
-                    if(_viewModel.ServerProperties != null)
+                    #region JavaPlugins
+                    string serverJavaPath = System.IO.Path.Combine(_viewModel.MyServer.Path, _pluginPath);
+                    if (System.IO.Directory.Exists(serverJavaPath))
                     {
-                        DataSet serverDS;
-                        switch (_viewModel.ServerProperties.database_type.ToLower())
+                        var allJavaPlugins = System.IO.Directory.GetDirectories(serverJavaPath);
+                        if (allJavaPlugins != null && allJavaPlugins.Count() > 0)
                         {
-                            default:
-                            case "sqlite":
+                            foreach (var jarFile in allJavaPlugins)
+                            {
+                                JavaPlugin javaPlugin = new JavaPlugin();
+                                javaPlugin.LoadFile(jarFile);
+                                if (javaPlugin != null && javaPlugin.JavaData != null)
                                 {
-                                    using (SQLiteConnection conn = new SQLiteConnection(string.Format("Data Source={0}\\Worlds\\{1}\\{1}.db", _viewModel.MyServer.Path, _viewModel.ServerProperties.server_world_name)))
-                                    {
-                                        using (SQLiteDataAdapter da = new SQLiteDataAdapter("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY 1", conn))
-                                        {
-                                            da.MissingSchemaAction = MissingSchemaAction.AddWithKey;
-                                            serverDS = new DataSet();
-                                            conn.Open();
+                                    if (_viewModel.ServerPlugins == null)
+                                        _viewModel.ServerPlugins = new List<PluginType>();
 
-                                            da.Fill(serverDS);
-                                            if (serverDS.Tables != null && serverDS.Tables.Count > 0)
-                                            {
-                                                var dt = serverDS.Tables[0];
-                                                foreach (DataRow row in dt.Rows)
-                                                {
-                                                    if (!row["name"].ToString().ToLower().Equals("sqlite_sequence"))
-                                                    {
-                                                        if (_viewModel.ServerTables == null)
-                                                            _viewModel.ServerTables = new List<string>();
-                                                        _viewModel.ServerTables.Add(row.ItemArray[0].ToString());
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                        
-                                    
-                                }break;
-                            case "mysql":
-                                {
-                                    MySqlConnectionStringBuilder ssb = new MySqlConnectionStringBuilder();
-                                    ssb.Database = _viewModel.ServerProperties.database_mysql_database;
-                                    ssb.Password = _viewModel.ServerProperties.database_mysql_password;
-                                    ssb.Port = (uint)_viewModel.ServerProperties.database_mysql_server_port;
-                                    ssb.Server = _viewModel.ServerProperties.database_mysql_server_ip;
-                                    ssb.UserID = _viewModel.ServerProperties.database_mysql_user;
-                                    using(MySqlConnection conn = new MySqlConnection(ssb.ConnectionString))
-                                    {
-                                        using(MySqlCommand cmd = conn.CreateCommand())
-                                        {
-                                            cmd.CommandText = "SHOW TABLES";
-                                            conn.Open();
-                                            MySqlDataReader dr = cmd.ExecuteReader();
-                                            if (dr.HasRows)
-                                            {
-                                                while(dr.Read())
-                                                {
-                                                    for(int i =0; i < dr.FieldCount; i++)
-                                                    {
-                                                        if (_viewModel.ServerTables == null)
-                                                            _viewModel.ServerTables = new List<string>();
-                                                        _viewModel.ServerTables.Add(dr.GetValue(i).ToString());
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                }break;
+                                    _viewModel.ServerPlugins.Add(javaPlugin);
+                                }
+                            }
                         }
                     }
-                }
-                #endregion
+                    #endregion
+                    #endregion
 
-                _myWatcher = new ServerStatusWatcher(_viewModel.MyServer.Ip, _viewModel.ServerProperties.server_port);
-                _myWatcher.OnServerStatus += _myWatcher_OnServerStatus;
-                _myWatcher.Start();
+                    #region laden der Server.properties
+                    var serverPropertyFile = System.IO.Path.Combine(_viewModel.MyServer.Path, "server.properties");
+                    if (System.IO.File.Exists(serverPropertyFile))
+                    {
+                        var properties = ReadPropertyFile(serverPropertyFile);
+                        var json = JsonConvert.SerializeObject(properties, Newtonsoft.Json.Formatting.Indented);
+
+                        _viewModel.ServerProperties = (ServerProperty)JsonConvert.DeserializeObject<ServerProperty>(json);
+                        if (_viewModel.ServerProperties != null)
+                        {
+                            DataSet serverDS;
+                            switch (_viewModel.ServerProperties.database_type.ToLower())
+                            {
+                                default:
+                                case "sqlite":
+                                    {
+                                        using (SQLiteConnection conn = new SQLiteConnection(string.Format("Data Source={0}\\Worlds\\{1}\\{1}.db", _viewModel.MyServer.Path, _viewModel.ServerProperties.server_world_name)))
+                                        {
+                                            using (SQLiteDataAdapter da = new SQLiteDataAdapter("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY 1", conn))
+                                            {
+                                                da.MissingSchemaAction = MissingSchemaAction.AddWithKey;
+                                                serverDS = new DataSet();
+                                                conn.Open();
+
+                                                da.Fill(serverDS);
+                                                if (serverDS.Tables != null && serverDS.Tables.Count > 0)
+                                                {
+                                                    var dt = serverDS.Tables[0];
+                                                    foreach (DataRow row in dt.Rows)
+                                                    {
+                                                        if (!row["name"].ToString().ToLower().Equals("sqlite_sequence"))
+                                                        {
+                                                            if (_viewModel.ServerTables == null)
+                                                                _viewModel.ServerTables = new List<string>();
+                                                            _viewModel.ServerTables.Add(row.ItemArray[0].ToString());
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+
+                                    }
+                                    break;
+                                case "mysql":
+                                    {
+                                        MySqlConnectionStringBuilder ssb = new MySqlConnectionStringBuilder();
+                                        ssb.Database = _viewModel.ServerProperties.database_mysql_database;
+                                        ssb.Password = _viewModel.ServerProperties.database_mysql_password;
+                                        ssb.Port = (uint)_viewModel.ServerProperties.database_mysql_server_port;
+                                        ssb.Server = _viewModel.ServerProperties.database_mysql_server_ip;
+                                        ssb.UserID = _viewModel.ServerProperties.database_mysql_user;
+                                        using (MySqlConnection conn = new MySqlConnection(ssb.ConnectionString))
+                                        {
+                                            using (MySqlCommand cmd = conn.CreateCommand())
+                                            {
+                                                cmd.CommandText = "SHOW TABLES";
+                                                conn.Open();
+                                                MySqlDataReader dr = cmd.ExecuteReader();
+                                                if (dr.HasRows)
+                                                {
+                                                    while (dr.Read())
+                                                    {
+                                                        for (int i = 0; i < dr.FieldCount; i++)
+                                                        {
+                                                            if (_viewModel.ServerTables == null)
+                                                                _viewModel.ServerTables = new List<string>();
+                                                            _viewModel.ServerTables.Add(dr.GetValue(i).ToString());
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                    #endregion
+
+                    _myWatcher = new ServerStatusWatcher(_viewModel.MyServer.Ip, _viewModel.ServerProperties.server_port);
+                    _myWatcher.OnServerStatus += _myWatcher_OnServerStatus;
+                    _myWatcher.Start();
+                }
+                else
+                {
+                    
+                }
+            }
+        }
+        
+        private async void ShowUpdateDialog()
+        {
+            var dlg = await this.ShowMessageAsync("Update verfügbar", " es liegt eine neue Version von Rising Wold Servermanager vor. Möchtest Du die neue version runterladen?", MessageDialogStyle.AffirmativeAndNegative,
+                new MetroDialogSettings()
+                {
+                    AffirmativeButtonText = "aktualisieren",
+                    NegativeButtonText = "abbrechen",
+                    ColorScheme = MetroDialogColorScheme.Accented
+                });
+
+            if(dlg == MessageDialogResult.Affirmative)
+            {
+                string updaterpath = System.IO.Path.Combine(_config.AppPath, "Updater");
+                Process p = new Process();
+                p.StartInfo.Arguments = "appPath=" + _config.AppPath;
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.FileName = System.IO.Path.Combine(updaterpath, "rwupdater.exe");
+                p.Start();
+                Environment.Exit(0);
             }
         }
 
@@ -603,6 +665,58 @@ namespace RWServerManager
                 }
             }
         }
+
+        private void GetSettingsDescription(object sender, RoutedEventArgs e)
+        {
+            var html = (string)Properties.Resources.SettingsHtml;
+            if (!String.IsNullOrEmpty(html))
+                _viewModel.SettingsHtml = html.Replace("{0}", @"<h2>database_mysql_database</h2>Name der MySQL - Datenbank<em>(nur bei der Verwendung von MySQL) </em >");
+        }
+
+        private void cmbSelDbTyp_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (grpSetMysql == null) return;
+            if (cmbSelDbTyp.SelectedIndex == 0 || cmbSelDbTyp.SelectedIndex == -1)
+                grpSetMysql.IsEnabled = false;
+            else if (cmbSelDbTyp.SelectedIndex == 1)
+                grpSetMysql.IsEnabled = true;
+        }
+
+        private void MetroWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if(_myWatcher != null)
+            {
+                _myWatcher.Stop();
+                while (_myWatcher.IsRunning) Thread.Sleep(100);
+            }
+        }
+    }
+
+    public static class BrowserBehavior
+    {
+        public static readonly DependencyProperty HtmlProperty = DependencyProperty.RegisterAttached(
+            "Html",
+            typeof(string),
+            typeof(BrowserBehavior),
+            new FrameworkPropertyMetadata(OnHtmlChanged));
+
+        [AttachedPropertyBrowsableForType(typeof(WebBrowser))]
+        public static string GetHtml(WebBrowser d)
+        {
+            return (string)d.GetValue(HtmlProperty);
+        }
+
+        public static void SetHtml(WebBrowser d, string value)
+        {
+            d.SetValue(HtmlProperty, value);
+        }
+
+        static void OnHtmlChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            WebBrowser wb = d as WebBrowser;
+            if (wb != null)
+                wb.NavigateToString(e.NewValue as string);
+        }
     }
 
     public class VMLanguage
@@ -762,6 +876,31 @@ namespace RWServerManager
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
+        }
+    }
+
+    public class DBTypeSelectorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null) return 0;
+            switch (value.ToString().ToLower())
+            {
+                default:
+                case "sqlite": return 0;
+                case "mysql": return 1;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null) return "sqlite";
+            switch ((int)value)
+            {
+                default:
+                case 0: return "sqlite";
+                case 1: return "mysql";
+            }
         }
     }
 }

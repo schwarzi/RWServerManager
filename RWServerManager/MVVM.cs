@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Ookii.Dialogs.Wpf;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace RWServerManager
 {
@@ -20,7 +22,45 @@ namespace RWServerManager
         private ServerInfo _aktualServer;
         private List<string> _serverTables;
         private string _serverlog;
+        private string _settingsHtml;
+        private string _serverLogoFile;
 
+        public string ServerLogoFile
+        {
+            get { return _serverLogoFile; }
+            set
+            {
+                if (Equals(value, _serverLogoFile)) return;
+                _serverLogoFile = value;
+                RaisePropertyChanged("ServerLogoFile");
+            }
+        }
+        public ICommand BrowseImagefileCommand
+        {
+            get { return new RelayCommand(BrowseImageFileAction); }
+        }
+
+        private void BrowseImageFileAction(object obj)
+        {
+            var vfbd = new VistaOpenFileDialog();
+            vfbd.Title = "Rising World Serververzeichnis";
+            if ((bool)vfbd.ShowDialog())
+            {
+                ServerLogoFile = vfbd.FileName;
+            }
+        }
+
+        
+        public string SettingsHtml
+        {
+            get { return _settingsHtml; }
+            set
+            {
+                if (Equals(value, _settingsHtml)) return;
+                _settingsHtml = value;
+                RaisePropertyChanged("SettingsHtml");
+            }
+        }
         public List<string> ServerTables
         {
             get { return _serverTables; }
@@ -147,6 +187,11 @@ namespace RWServerManager
         {
             get
             {
+                if(columnName == "SelectedPath")
+                {
+                    if (!System.IO.File.Exists(this.ServerLogoFile))
+                        return "Datei exisitiert nicht!";
+                }
                 return String.Empty;
             }
         }
@@ -166,5 +211,34 @@ namespace RWServerManager
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
         #endregion
+    }
+
+
+    public class RelayCommand : ICommand
+    {
+        private Action<object> execute;
+        private Func<object, bool> canExecute;
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public RelayCommand(Action<object> execute, Func<object, bool> canExecute = null)
+        {
+            this.execute = execute;
+            this.canExecute = canExecute;
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            return this.canExecute == null || this.canExecute(parameter);
+        }
+
+        public void Execute(object parameter)
+        {
+            this.execute(parameter);
+        }
     }
 }
