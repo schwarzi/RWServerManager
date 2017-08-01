@@ -21,7 +21,7 @@
     <AssemblyFileVersionSettings>IncrementOnDemand.IncrementOnDemand.IncrementOnDemand.Increment</AssemblyFileVersionSettings>
     <AssemblyInfoFilePath>Properties\AssemblyInfo.cs</AssemblyInfoFilePath>
     <PrimaryVersionType>AssemblyFileVersionAttribute</PrimaryVersionType>
-    <AssemblyVersion>1.0.0.137</AssemblyVersion>
+    <AssemblyVersion>1.0.0.138</AssemblyVersion>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
